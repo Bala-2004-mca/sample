@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "526986827350",
+    "project_id": "bala-python-tutorial",
+    "storage_bucket": "bala-python-tutorial.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:526986827350:android:b0389c1a36fd0e01280df7",
+        "android_client_info": {
+          "package_name": "com.example.sample"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHwErgq-1iFeHPPcIbvSY_f9pHnJgkTfA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
