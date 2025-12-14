@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -9,38 +11,81 @@ class ChatbotScreen extends StatefulWidget {
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
   final TextEditingController _controller = TextEditingController();
-  final List<Map<String, String>> _messages = [];
 
-  void _sendMessage() {
-    if (_controller.text.isEmpty) return;
+  // Static list to keep messages when switching screens
+  static final List<Map<String, String>> _messages = [];
+  bool _isLoading = false;
 
-    setState(() {
-      _messages.add({'sender': 'user', 'text': _controller.text});
-    });
+  // 1. PASTE YOUR NEW KEY HERE
+  final String _apiKey = "AIzaSyAKa5cGmgTkJpJzOOM-JAzNzrD092N7j-U";
 
-    _getBotResponse(_controller.text);
-    _controller.clear();
+  @override
+  void initState() {
+    super.initState();
+    if (_messages.isEmpty) {
+      _messages.add({'sender': 'bot', 'text': 'Hello! How can I help you?'});
+    }
   }
 
-  void _getBotResponse(String message) {
-    String response;
-    message = message.toLowerCase();
+  void _clearChat() {
+    setState(() {
+      _messages.clear();
+      _messages.add({'sender': 'bot', 'text': 'Chat cleared.'});
+    });
+  }
 
-    if (message.contains('hello') || message.contains('hi')) {
-      response = 'Hello! How can I help you today?';
-    } else if (message.contains('course') || message.contains('lesson')) {
-      response = 'You can find all your courses and lessons on the home screen.';
-    } else if (message.contains('password') || message.contains('reset')) {
-      response = 'To reset your password, please go to the login screen and click on \'Forgot Password\'.';
-    } else if (message.contains('bye')) {
-      response = 'Goodbye! Have a great day!';
-    } else {
-      response = 'I am sorry, I do not understand. Please ask me something else.';
-    }
+  Future<void> _sendMessage() async {
+    final userMessage = _controller.text;
+    if (userMessage.isEmpty || _isLoading) return;
 
     setState(() {
-      _messages.add({'sender': 'bot', 'text': response});
+      _messages.add({'sender': 'user', 'text': userMessage});
+      _isLoading = true;
     });
+
+    _controller.clear();
+
+    // 2. Direct API URL (Works better than the package for troubleshooting)
+    final url = Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$_apiKey'
+    );
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "contents": [{
+            "parts": [{"text": userMessage}]
+          }]
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // Extract the text from the complex JSON response
+        final botReply = data['candidates'][0]['content']['parts'][0]['text'];
+
+        setState(() {
+          _messages.add({'sender': 'bot', 'text': botReply});
+        });
+      } else {
+        setState(() {
+          _messages.add({
+            'sender': 'bot',
+            'text': 'Error ${response.statusCode}: ${response.body}'
+          });
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _messages.add({'sender': 'bot', 'text': 'Connection Error: $e'});
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -48,76 +93,68 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Help & Support'),
+        title: const Text('AI Chat Support'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(icon: const Icon(Icons.delete_outline), onPressed: _clearChat),
+        ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.primary.withOpacity(0.8),
-              theme.colorScheme.secondary.withOpacity(0.8),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16.0),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  final isUser = message['sender'] == 'user';
-                  return Align(
-                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isUser ? Colors.white : theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        message['text']!,
-                        style: TextStyle(color: isUser ? Colors.black87 : Colors.white),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            Padding(
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
               padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: InputDecoration(
-                        hintText: 'Type your message...',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+                final isUser = message['sender'] == 'user';
+                return Align(
+                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.all(12),
+                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                    decoration: BoxDecoration(
+                      color: isUser ? Colors.blue : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      message['text']!,
+                      style: TextStyle(color: isUser ? Colors.white : Colors.black87),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white),
-                    onPressed: _sendMessage,
-                  ),
-                ],
-              ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+          if (_isLoading) const LinearProgressIndicator(minHeight: 2),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: 'Type your message...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(25)),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _sendMessage,
+                  color: theme.colorScheme.primary,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

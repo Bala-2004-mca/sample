@@ -38,7 +38,7 @@ class CourseProvider with ChangeNotifier {
       ),
       CourseUnit(
         id: 'unit2',
-        title: 'Unit II: Control & Functions',
+        title: 'Unit II: Control statements & Functions',
         description: 'Control statements, functions and string manipulation',
         topics: [
           'Control statement',

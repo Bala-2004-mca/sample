@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -27,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       setState(() {
         _isLoading = true;
+        _errorMessage = null;
       });
     }
 
@@ -49,25 +51,23 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on FirebaseAuthException catch (e) {
       String message;
-      if (e.code == 'user-not-found') {
-        message = 'No user found for that email.';
-      } else if (e.code == 'wrong-password') {
-        message = 'Wrong password provided for that user.';
+      if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+        message = 'You entered wrong username/password.';
       } else if (e.code == 'invalid-email') {
-        message = 'The email address is not valid.';
+        message = 'The email address is badly formatted.';
       } else {
         message = 'An unknown error occurred. Please try again.';
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        setState(() {
+          _errorMessage = message;
+        });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        setState(() {
+          _errorMessage = e.toString();
+        });
       }
     } finally {
       if (mounted) {
@@ -145,6 +145,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           obscureText: true,
                         ),
+                        if (_errorMessage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: Text(
+                              _errorMessage!,
+                              style: const TextStyle(
+                                  color: Colors.red, fontSize: 12),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                         const SizedBox(height: 32),
                         _isLoading
                             ? const CircularProgressIndicator()

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+</head>
+<body>
+    <script type="text/javascript">
+        let pyodide;
+        async function main() {
+            pyodide = await loadPyodide();
+
+            // Make runPython function available to be called from Flutter.
+            window.runPython = async (code) => {
+                try {
+                    // Redirect print() statements to a buffer.
+                    pyodide.runPython(
+                        `
+import io
+import sys
+sys.stdout = io.StringIO()
+                        `
+                    );
+                    let result = await pyodide.runPythonAsync(code);
+                    let stdout = pyodide.runPython("sys.stdout.getvalue()");
+                    // If there's output from print(), return that. Otherwise, return the expression result.
+                    let finalResult = stdout.trim() || (result !== undefined ? result.toString() : '');
+                    return finalResult;
+                } catch (err) {
+                    return err.toString();
+                }
+            };
+            
+            // Signal to Flutter that Pyodide is ready.
+            if (window.pyodideReady && window.pyodideReady.postMessage) {
+                window.pyodideReady.postMessage("ready");
+            }
+        }
+        main();
+    </script>
+</body>
+</html>

@@ -14,9 +14,23 @@ dependencies:
   provider: ^6.1.2
   shared_preferences: ^2.2.2
   cupertino_icons: ^1.0.2
+
+  # UPDATED: Use a newer version to fix "Model not found" errors
+  google_generative_ai: ^0.4.6
+
+  # Firebase
   firebase_core: ^2.27.0
   firebase_auth: ^4.17.8
+
+  # Markdown
   flutter_markdown: ^0.6.18
+
+  # For API calls
+  http: ^1.2.0
+  flutter_dotenv: ^5.1.0
+  flutter_code_editor: ^0.3.2
+  flutter_highlight: ^0.7.0
+  highlight: ^0.7.0
 
 dev_dependencies:
   flutter_test:

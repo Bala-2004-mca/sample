@@ -5,6 +5,7 @@ import 'package:pylearn/screens/chatbot_screen.dart';
 import 'package:pylearn/screens/my_classes_screen.dart';
 import 'package:pylearn/screens/performance_screen.dart';
 import 'package:pylearn/screens/profile_screen.dart';
+import 'package:pylearn/screens/python_ide_screen.dart';
 import 'package:pylearn/screens/unit_content_screen.dart';
 import 'package:pylearn/utils/fade_page_route.dart';
 import 'package:provider/provider.dart';
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     PerformanceScreen(),
     ProfileScreen(),
     ChatbotScreen(),
+    PythonIdeScreen(),
   ];
 
   Widget _buildBody() {
@@ -66,6 +68,10 @@ class _HomeScreenState extends State<HomeScreen> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.support_agent),
                 label: 'Support',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.code),
+                label: 'IDE',
               ),
             ],
             currentIndex: _selectedIndex,
@@ -129,6 +135,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     selectedIcon: Icon(Icons.support_agent),
                     padding: EdgeInsets.symmetric(vertical: 8),
                     label: Text('Support'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.code_outlined),
+                    selectedIcon: Icon(Icons.code),
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    label: Text('IDE'),
                   ),
                 ],
               ),
